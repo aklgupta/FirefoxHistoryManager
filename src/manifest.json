@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "History Domain Migrator",
+  "version": "2.0",
+  "description": "Full-page tool to migrate Firefox browsing history entries from an old domain to a new domain with side-by-side preview.",
+  "permissions": [
+    "history"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_title": "Open History Domain Migrator"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "history-domain-migrator@local.extension",
+      "strict_min_version": "109.0"
+    }
+  }
+}
