@@ -44,6 +44,34 @@ const MigrateUrlsTab = {
       300
     );
 
+    // Disable migrate button by default
+    migrateBtn.disabled = true;
+
+    // Update button state synchronously on every input change
+    const updateMigrateBtnState = () => {
+      const matchMode = matchModeSelect.value;
+      const isAnyPart = matchMode === "anyPart";
+      const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
+
+      if (result.error) {
+        migrateBtn.disabled = true;
+        return;
+      }
+
+      const { newDomain } = result;
+      // In domain/subdomain modes, button is disabled if new domain is empty
+      if (!isAnyPart && !newDomain) {
+        migrateBtn.disabled = true;
+        return;
+      }
+
+      migrateBtn.disabled = false;
+    };
+
+    oldDomainInput.addEventListener("input", updateMigrateBtnState);
+    newDomainInput.addEventListener("input", updateMigrateBtnState);
+    matchModeSelect.addEventListener("change", updateMigrateBtnState);
+
     // Live preview: debounced search triggered by typing in old/new domain or changing match mode
     let livePreviewTimeout = null;
     const runLivePreview = () => {
@@ -51,7 +79,7 @@ const MigrateUrlsTab = {
       livePreviewTimeout = setTimeout(() => {
         this.updatePreview(
           oldDomainInput, newDomainInput, matchModeSelect, filterInput, resultsSection,
-          previewTableBody, pageInfo, resultsSummary, statusBar, migrateBtn
+          previewTableBody, pageInfo, resultsSummary, statusBar
         );
       }, 400);
     };
@@ -137,14 +165,15 @@ const MigrateUrlsTab = {
       } catch (err) {
         setStatus(statusBar, `Error during migration: ${err.message}`, "error");
       } finally {
-        migrateBtn.disabled = false;
+        // Restore button state based on current inputs
+        updateMigrateBtnState();
       }
     });
   },
 
   // Live preview: search and render matched records
   async updatePreview(oldDomainInput, newDomainInput, matchModeSelect, filterInput,
-                      resultsSection, previewTableBody, pageInfo, resultsSummary, statusBar, migrateBtn) {
+                      resultsSection, previewTableBody, pageInfo, resultsSummary, statusBar) {
     const matchMode = matchModeSelect.value;
     const isAnyPart = matchMode === "anyPart";
 
@@ -176,10 +205,6 @@ const MigrateUrlsTab = {
         setStatus(statusBar, `No history entries found for ${oldDomain}.`, "info");
         this.allMatchedRecords = [];
         this.filteredRecords = [];
-        // Enable button if new domain is provided or mode is anyPart
-        if (newDomain || isAnyPart) {
-          migrateBtn.disabled = false;
-        }
         return;
       }
 
@@ -193,10 +218,8 @@ const MigrateUrlsTab = {
       // Check if new domain is empty in domain/subdomain modes
       if (!isAnyPart && !newDomain) {
         setStatus(statusBar, "Please enter a new domain to migrate.", "error");
-        migrateBtn.disabled = true;
       } else {
         setStatus(statusBar, `${matched.length} unique URL(s) will be migrated.`, "success");
-        migrateBtn.disabled = false;
       }
     } catch (err) {
       setStatus(statusBar, `Error: ${err.message}`, "error");
