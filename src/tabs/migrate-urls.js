@@ -9,7 +9,7 @@ const MigrateUrlsTab = {
   init() {
     const oldDomainInput = document.getElementById("oldDomain");
     const newDomainInput = document.getElementById("newDomain");
-    const includeSubdomainsInput = document.getElementById("includeSubdomains");
+    const matchModeSelect = document.getElementById("matchMode");
     const deleteOldInput = document.getElementById("deleteOld");
     const previewBtn = document.getElementById("previewBtn");
     const migrateBtn = document.getElementById("migrateBtn");
@@ -47,20 +47,20 @@ const MigrateUrlsTab = {
 
     // Preview button
     previewBtn.addEventListener("click", async () => {
-      const result = validateInputs(oldDomainInput, newDomainInput);
+      const matchMode = matchModeSelect.value;
+      const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
       if (result.error) {
         setStatus(statusBar, result.error, "error");
         return;
       }
 
       const { oldDomain, newDomain } = result;
-      const includeSubdomains = includeSubdomainsInput.checked;
 
       previewBtn.disabled = true;
       setStatus(statusBar, "Searching Firefox history...");
 
       try {
-        const matched = await findMatchingRecords(oldDomain, newDomain, includeSubdomains);
+        const matched = await findMatchingRecords(oldDomain, newDomain, matchMode);
 
         if (matched.length === 0) {
           resultsSection.classList.add("hidden");
@@ -84,14 +84,14 @@ const MigrateUrlsTab = {
 
     // Migrate button
     migrateBtn.addEventListener("click", async () => {
-      const result = validateInputs(oldDomainInput, newDomainInput);
+      const matchMode = matchModeSelect.value;
+      const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
       if (result.error) {
         setStatus(statusBar, result.error, "error");
         return;
       }
 
       const { oldDomain, newDomain } = result;
-      const includeSubdomains = includeSubdomainsInput.checked;
       const deleteOld = deleteOldInput.checked;
 
       previewBtn.disabled = true;
@@ -99,7 +99,7 @@ const MigrateUrlsTab = {
       setStatus(statusBar, "Scanning history for migration...");
 
       try {
-        const records = await findMatchingRecords(oldDomain, newDomain, includeSubdomains);
+        const records = await findMatchingRecords(oldDomain, newDomain, matchMode);
 
         if (records.length === 0) {
           setStatus(statusBar, `No history entries found for ${oldDomain}.`, "info");
@@ -264,41 +264,58 @@ function replaceHost(urlObj, oldDomain, newDomain) {
   return urlObj.toString();
 }
 
-function validateInputs(oldDomainInput, newDomainInput) {
-  const oldDomain = normalizeDomain(oldDomainInput.value);
-  const newDomain = normalizeDomain(newDomainInput.value);
+function validateInputs(oldDomainInput, newDomainInput, matchMode) {
+  const isAnyPart = matchMode === "anyPart";
+  const oldDomain = isAnyPart ? oldDomainInput.value.trim() : normalizeDomain(oldDomainInput.value);
+  const newDomain = isAnyPart ? newDomainInput.value.trim() : normalizeDomain(newDomainInput.value);
 
   if (!oldDomain || !newDomain) {
-    return { error: "Please enter both the old and new domains." };
+    return { error: "Please enter both the old and new values." };
   }
-  if (!isValidDomain(oldDomain) || !isValidDomain(newDomain)) {
+  if (!isAnyPart && (!isValidDomain(oldDomain) || !isValidDomain(newDomain))) {
     return { error: "Please enter valid full domains (e.g., oldsite.com and newsite.com)." };
   }
   if (oldDomain === newDomain) {
-    return { error: "Old and new domains must be different." };
+    return { error: "Old and new values must be different." };
   }
   return { oldDomain, newDomain };
 }
 
-async function findMatchingRecords(oldDomain, newDomain, includeSubdomains) {
+async function findMatchingRecords(oldDomain, newDomain, matchMode) {
   const results = await HistoryAPI.searchByText(oldDomain);
+  const includeSubdomains = matchMode === "subdomain";
+  const isAnyPart = matchMode === "anyPart";
 
   const matched = [];
   for (const item of results) {
     try {
       const parsed = new URL(item.url);
-      if (
-        (parsed.protocol === "http:" || parsed.protocol === "https:") &&
-        matchesDomain(parsed.hostname, oldDomain, newDomain, includeSubdomains)
-      ) {
-        matched.push({
-          title: item.title || "(No title)",
-          oldUrl: item.url,
-          newUrl: replaceHost(new URL(item.url), oldDomain, newDomain),
-          oldDomain,
-          newDomain,
-          visitCount: item.visitCount || 1
-        });
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") continue;
+
+      if (isAnyPart) {
+        // String-based matching: check if the old string appears anywhere in the URL
+        if (item.url.includes(oldDomain)) {
+          matched.push({
+            title: item.title || "(No title)",
+            oldUrl: item.url,
+            newUrl: item.url.replace(oldDomain, newDomain),
+            oldDomain,
+            newDomain,
+            visitCount: item.visitCount || 1
+          });
+        }
+      } else {
+        // Domain-based matching
+        if (matchesDomain(parsed.hostname, oldDomain, newDomain, includeSubdomains)) {
+          matched.push({
+            title: item.title || "(No title)",
+            oldUrl: item.url,
+            newUrl: replaceHost(new URL(item.url), oldDomain, newDomain),
+            oldDomain,
+            newDomain,
+            visitCount: item.visitCount || 1
+          });
+        }
       }
     } catch {
       // Skip malformed URLs
