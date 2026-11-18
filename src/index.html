@@ -53,6 +53,7 @@
             </div>
             <div class="actions-row" style="margin:0">
               <button id="searchHistoryBtn" class="btn secondary">Refresh</button>
+              <button id="deleteSelectedBtn" class="btn danger" disabled>Delete selected (<span id="selectedCount">0</span>)</button>
             </div>
           </div>
         </section>
@@ -74,15 +75,19 @@
             <table>
               <thead>
                 <tr>
+                  <th class="col-select">
+                    <input type="checkbox" id="historySelectAll" title="Select all on this page" />
+                  </th>
                   <th class="col-index">#</th>
                   <th class="col-title">Page Title</th>
                   <th class="col-url">URL</th>
                   <th class="col-visits">Visits</th>
+                  <th class="col-actions">Actions</th>
                 </tr>
               </thead>
               <tbody id="historyTableBody">
                 <tr>
-                  <td colspan="4" style="text-align:center;color:var(--muted)">No results yet.</td>
+                  <td colspan="6" style="text-align:center;color:var(--muted)">No results yet.</td>
                 </tr>
               </tbody>
             </table>
