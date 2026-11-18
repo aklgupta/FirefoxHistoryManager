@@ -245,7 +245,7 @@ const ViewHistoryTab = {
 
         const tdUrl = document.createElement("td");
         const urlSpan = document.createElement("span");
-        urlSpan.className = "url-pill url-new";
+        urlSpan.className = "url-pill";
         urlSpan.textContent = rec.url;
         tdUrl.appendChild(urlSpan);
 
