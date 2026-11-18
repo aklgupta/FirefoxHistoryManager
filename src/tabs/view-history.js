@@ -209,6 +209,9 @@ const ViewHistoryTab = {
     } else {
       slice.forEach((rec, idx) => {
         const tr = document.createElement("tr");
+        if (this.selectedUrls.has(rec.url)) {
+          tr.className = "selected";
+        }
 
         // Checkbox cell
         const tdSelect = document.createElement("td");

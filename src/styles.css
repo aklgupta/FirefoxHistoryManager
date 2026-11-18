@@ -260,12 +260,12 @@ body {
 }
 
 .btn.danger {
-  background: #dc2626;
-  color: #fff;
+  background: #dc2626 !important;
+  color: #fff !important;
 }
 
 .btn.danger:hover:not(:disabled) {
-  background: #b91c1c;
+  background: #b91c1c !important;
 }
 
 .status-bar {
@@ -361,8 +361,12 @@ th {
 }
 
 .col-select {
-  width: 40px;
+  width: 36px;
   text-align: center;
+}
+
+tr.selected {
+  background: #fef3c7;
 }
 
 .col-index {
@@ -383,7 +387,7 @@ th {
 }
 
 .col-actions {
-  width: 90px;
+  width: 70px;
   text-align: center;
 }
 
