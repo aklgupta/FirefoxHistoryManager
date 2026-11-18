@@ -24,7 +24,7 @@ const ViewHistoryTab = {
     const selectedCountSpan = document.getElementById("selectedCount");
 
     // Initialize shared pagination
-    Pagination.init(pageSizeSelect, firstPageBtn, prevPageBtn, nextPageBtn, lastPageBtn, () => {
+    Pagination.init("view-history", pageSizeSelect, firstPageBtn, prevPageBtn, nextPageBtn, lastPageBtn, () => {
       this.renderTablePage(tableBody, pageInfo, resultsSummary, selectAllCheckbox);
     });
 
@@ -34,8 +34,10 @@ const ViewHistoryTab = {
       () => this.allRecords,
       (record, query) => Filtering.matchFields(record, query, ["url", "title"]),
       (filtered) => {
+        this.selectedUrls.clear();
         this.filteredRecords = filtered;
         Pagination.reset();
+        this.updateSelectionUI(deleteSelectedBtn, selectedCountSpan);
         this.renderTablePage(tableBody, pageInfo, resultsSummary, selectAllCheckbox);
       },
       300
@@ -53,6 +55,7 @@ const ViewHistoryTab = {
 
     // Select all checkbox (current page only)
     selectAllCheckbox.addEventListener("change", () => {
+      Pagination.setActive("view-history");
       const checked = selectAllCheckbox.checked;
       const { startIdx, endIdx } = Pagination.getSliceIndices(this.filteredRecords.length);
       const pageSlice = this.filteredRecords.slice(startIdx, endIdx);
@@ -178,6 +181,7 @@ const ViewHistoryTab = {
   },
 
   renderTablePage(tableBody, pageInfo, resultsSummary, selectAllCheckbox) {
+    Pagination.setActive("view-history");
     const totalItems = this.filteredRecords.length;
     Pagination.setTotalItems(totalItems);
     const { startIdx, endIdx, totalPages } = Pagination.getSliceIndices(totalItems);

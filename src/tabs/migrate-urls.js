@@ -27,7 +27,7 @@ const MigrateUrlsTab = {
     const lastPageBtn = document.getElementById("lastPageBtn");
 
     // Initialize shared pagination
-    Pagination.init(pageSizeSelect, firstPageBtn, prevPageBtn, nextPageBtn, lastPageBtn, () => {
+    Pagination.init("migrate-urls", pageSizeSelect, firstPageBtn, prevPageBtn, nextPageBtn, lastPageBtn, () => {
       this.renderTablePage(previewTableBody, pageInfo, resultsSummary);
     });
 
@@ -227,6 +227,7 @@ const MigrateUrlsTab = {
   },
 
   renderTablePage(previewTableBody, pageInfo, resultsSummary) {
+    Pagination.setActive("migrate-urls");
     const totalItems = this.filteredRecords.length;
     Pagination.setTotalItems(totalItems);
     const { startIdx, endIdx, totalPages } = Pagination.getSliceIndices(totalItems);
