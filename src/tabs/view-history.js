@@ -34,8 +34,10 @@ const ViewHistoryTab = {
       () => this.allRecords,
       (record, query) => Filtering.matchFields(record, query, ["url", "title"]),
       (filtered) => {
+        this.selectedUrls.clear();
         this.filteredRecords = filtered;
         Pagination.reset();
+        this.updateSelectionUI(deleteSelectedBtn, selectedCountSpan);
         this.renderTablePage(tableBody, pageInfo, resultsSummary, selectAllCheckbox);
       },
       300
