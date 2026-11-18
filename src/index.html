@@ -3,93 +3,189 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>History Domain Migrator</title>
+  <title>History Manager</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="page-wrapper">
-    <header class="header">
-      <div>
-        <h1>History Domain Migrator</h1>
-        <p class="subtitle">Safely copy browsing history visits from an old domain to an updated domain.</p>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>History Manager</h1>
       </div>
-    </header>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="viewHistory">
+          <span class="nav-icon">📋</span>
+          <span>View History</span>
+        </button>
+        <button class="nav-item" data-tab="migrateUrls">
+          <span class="nav-icon">🔄</span>
+          <span>Migrate URLs</span>
+        </button>
+      </nav>
+    </aside>
 
-    <section class="controls-card">
-      <div class="input-row">
-        <div class="field">
-          <label for="oldDomain">Old Domain</label>
-          <input type="text" id="oldDomain" placeholder="e.g., oldsite.com" />
-        </div>
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- View History Tab -->
+      <section id="viewHistory" class="tab-panel active">
+        <header class="header">
+          <div>
+            <h1>View History</h1>
+            <p class="subtitle">Browse and search your browsing history.</p>
+          </div>
+        </header>
 
-        <div class="arrow-divider">→</div>
+        <section class="controls-card">
+          <div class="input-row">
+            <div class="field" style="flex:2">
+              <label for="historySearchInput">Search</label>
+              <input type="text" id="historySearchInput" placeholder="Search by URL or title..." />
+            </div>
+            <div class="field">
+              <label for="historyTimeRange">Time Range</label>
+              <select id="historyTimeRange">
+                <option value="all">All time</option>
+                <option value="today">Today</option>
+                <option value="week">This week</option>
+                <option value="month">This month</option>
+              </select>
+            </div>
+            <div class="actions-row" style="margin:0">
+              <button id="searchHistoryBtn" class="btn secondary">Refresh</button>
+            </div>
+          </div>
+        </section>
 
-        <div class="field">
-          <label for="newDomain">New Domain</label>
-          <input type="text" id="newDomain" placeholder="e.g., newsite.com" />
-        </div>
-      </div>
+        <section id="historyResultsSection" class="results-card">
+          <div class="results-toolbar">
+            <div class="results-summary" id="historyResultsSummary">Loading history...</div>
+            <div class="filter-controls">
+              <select id="historyPageSizeSelect" aria-label="Rows per page">
+                <option value="25">25 / page</option>
+                <option value="50" selected>50 / page</option>
+                <option value="100">100 / page</option>
+                <option value="250">250 / page</option>
+              </select>
+            </div>
+          </div>
 
-      <div class="options-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="includeSubdomains" checked />
-          <span>Include subdomains (e.g., <code>sub.oldsite.com</code>)</span>
-        </label>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-index">#</th>
+                  <th class="col-title">Page Title</th>
+                  <th class="col-url">URL</th>
+                  <th class="col-visits">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr>
+                  <td colspan="4" style="text-align:center;color:var(--muted)">No results yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <label class="checkbox-label danger-option">
-          <input type="checkbox" id="deleteOld" />
-          <span>Delete old history entries after migrating</span>
-        </label>
-      </div>
+          <div class="pagination-bar">
+            <div id="historyPageInfo" class="page-info"></div>
+            <div class="pagination-buttons">
+              <button id="historyFirstPageBtn" class="btn small secondary" disabled>« First</button>
+              <button id="historyPrevPageBtn" class="btn small secondary" disabled>‹ Previous</button>
+              <button id="historyNextPageBtn" class="btn small secondary" disabled>Next ›</button>
+              <button id="historyLastPageBtn" class="btn small secondary" disabled>Last »</button>
+            </div>
+          </div>
+        </section>
+      </section>
 
-      <div class="actions-row">
-        <button id="previewBtn" class="btn secondary">Preview Matches</button>
-        <button id="migrateBtn" class="btn primary">Migrate History</button>
-      </div>
+      <!-- Migrate URLs Tab -->
+      <section id="migrateUrls" class="tab-panel">
+        <header class="header">
+          <div>
+            <h1>Migrate URLs</h1>
+            <p class="subtitle">Safely copy browsing history visits from an old domain to an updated domain.</p>
+          </div>
+        </header>
 
-      <div id="statusBar" class="status-bar hidden"></div>
-    </section>
+        <section class="controls-card">
+          <div class="input-row">
+            <div class="field">
+              <label for="oldDomain">Old Domain</label>
+              <input type="text" id="oldDomain" placeholder="e.g., oldsite.com" />
+            </div>
 
-    <section id="resultsSection" class="results-card hidden">
-      <div class="results-toolbar">
-        <div class="results-summary" id="resultsSummary"></div>
+            <div class="arrow-divider">→</div>
 
-        <div class="filter-controls">
-          <input type="text" id="filterInput" placeholder="Filter preview URLs or titles..." />
-          <select id="pageSizeSelect" aria-label="Rows per page">
-            <option value="25">25 / page</option>
-            <option value="50" selected>50 / page</option>
-            <option value="100">100 / page</option>
-            <option value="250">250 / page</option>
-          </select>
-        </div>
-      </div>
+            <div class="field">
+              <label for="newDomain">New Domain</label>
+              <input type="text" id="newDomain" placeholder="e.g., newsite.com" />
+            </div>
+          </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th class="col-index">#</th>
-              <th class="col-title">Page Title</th>
-              <th class="col-url">Current (Old) URL</th>
-              <th class="col-url">Updated (New) URL</th>
-              <th class="col-visits">Visits</th>
-            </tr>
-          </thead>
-          <tbody id="previewTableBody"></tbody>
-        </table>
-      </div>
+          <div class="options-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="includeSubdomains" checked />
+              <span>Include subdomains (e.g., <code>sub.oldsite.com</code>)</span>
+            </label>
 
-      <div class="pagination-bar">
-        <div id="pageInfo" class="page-info"></div>
-        <div class="pagination-buttons">
-          <button id="firstPageBtn" class="btn small secondary">« First</button>
-          <button id="prevPageBtn" class="btn small secondary">‹ Previous</button>
-          <button id="nextPageBtn" class="btn small secondary">Next ›</button>
-          <button id="lastPageBtn" class="btn small secondary">Last »</button>
-        </div>
-      </div>
-    </section>
+            <label class="checkbox-label danger-option">
+              <input type="checkbox" id="deleteOld" />
+              <span>Delete old history entries after migrating</span>
+            </label>
+          </div>
+
+          <div class="actions-row">
+            <button id="previewBtn" class="btn secondary">Preview Matches</button>
+            <button id="migrateBtn" class="btn primary">Migrate History</button>
+          </div>
+
+          <div id="statusBar" class="status-bar hidden"></div>
+        </section>
+
+        <section id="resultsSection" class="results-card hidden">
+          <div class="results-toolbar">
+            <div class="results-summary" id="resultsSummary"></div>
+
+            <div class="filter-controls">
+              <input type="text" id="filterInput" placeholder="Filter preview URLs or titles..." />
+              <select id="pageSizeSelect" aria-label="Rows per page">
+                <option value="25">25 / page</option>
+                <option value="50" selected>50 / page</option>
+                <option value="100">100 / page</option>
+                <option value="250">250 / page</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-index">#</th>
+                  <th class="col-title">Page Title</th>
+                  <th class="col-url">Current (Old) URL</th>
+                  <th class="col-url">Updated (New) URL</th>
+                  <th class="col-visits">Visits</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination-bar">
+            <div id="pageInfo" class="page-info"></div>
+            <div class="pagination-buttons">
+              <button id="firstPageBtn" class="btn small secondary">« First</button>
+              <button id="prevPageBtn" class="btn small secondary">‹ Previous</button>
+              <button id="nextPageBtn" class="btn small secondary">Next ›</button>
+              <button id="lastPageBtn" class="btn small secondary">Last »</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
   </div>
 
   <script src="app.js"></script>

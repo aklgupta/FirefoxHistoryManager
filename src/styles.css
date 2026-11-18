@@ -12,6 +12,10 @@
   --old-text: #a4000f;
   --new-bg: #f0fdf4;
   --new-text: #0f5132;
+  --sidebar-bg: #1f2937;
+  --sidebar-text: #e5e7eb;
+  --sidebar-active-bg: #374151;
+  --sidebar-width: 220px;
 }
 
 * {
@@ -26,10 +30,97 @@ body {
   line-height: 1.5;
 }
 
-.page-wrapper {
+/* App Layout with Sidebar */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-header h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 10px;
+  gap: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sidebar-text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.nav-item:hover {
+  background: var(--sidebar-active-bg);
+}
+
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  min-width: 0;
+}
+
+/* Tab Panels */
+.tab-panel {
+  display: none;
   max-width: 1360px;
   margin: 0 auto;
   padding: 28px 24px 60px;
+}
+
+.tab-panel.active {
+  display: block;
 }
 
 .header {
@@ -77,7 +168,8 @@ body {
   margin-bottom: 6px;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 9px 12px;
   border: 1px solid var(--border);
@@ -85,7 +177,12 @@ body {
   font-size: 14px;
 }
 
+.field select {
+  background: #fff;
+}
+
 .field input:focus,
+.field select:focus,
 .filter-controls input:focus,
 .filter-controls select:focus {
   outline: 2px solid var(--primary);

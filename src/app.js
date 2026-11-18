@@ -1,3 +1,230 @@
+// ============================================================
+// Tab Navigation
+// ============================================================
+document.querySelectorAll(".nav-item").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const targetTab = btn.getAttribute("data-tab");
+
+    // Update nav buttons
+    document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    // Update tab panels
+    document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.remove("active"));
+    document.getElementById(targetTab).classList.add("active");
+  });
+});
+
+// ============================================================
+// View History Tab
+// ============================================================
+const historySearchInput = document.getElementById("historySearchInput");
+const historyTimeRange = document.getElementById("historyTimeRange");
+const searchHistoryBtn = document.getElementById("searchHistoryBtn");
+const historyResultsSummary = document.getElementById("historyResultsSummary");
+const historyPageSizeSelect = document.getElementById("historyPageSizeSelect");
+const historyTableBody = document.getElementById("historyTableBody");
+const historyPageInfo = document.getElementById("historyPageInfo");
+const historyFirstPageBtn = document.getElementById("historyFirstPageBtn");
+const historyPrevPageBtn = document.getElementById("historyPrevPageBtn");
+const historyNextPageBtn = document.getElementById("historyNextPageBtn");
+const historyLastPageBtn = document.getElementById("historyLastPageBtn");
+
+let allHistoryRecords = [];
+let historyFilteredRecords = [];
+let historyCurrentPage = 1;
+let historyPageSize = parseInt(historyPageSizeSelect.value, 10);
+let historySearchDebounceTimer = null;
+
+function getStartTimeForRange(range) {
+  const now = Date.now();
+  switch (range) {
+    case "today":
+      return new Date(now - 86400000).getTime();
+    case "week":
+      return new Date(now - 7 * 86400000).getTime();
+    case "month":
+      return new Date(now - 30 * 86400000).getTime();
+    default:
+      return 0;
+  }
+}
+
+async function fetchHistory() {
+  const timeRange = historyTimeRange.value;
+  const startTime = getStartTimeForRange(timeRange);
+
+  searchHistoryBtn.disabled = true;
+  searchHistoryBtn.textContent = "Loading...";
+  historyResultsSummary.textContent = "Loading history...";
+
+  try {
+    const results = await browser.history.search({ text: "", maxResults: 100000, startTime: startTime });
+
+    allHistoryRecords = results.map((item) => ({
+      title: item.title || "",
+      url: item.url,
+      visitCount: item.visitCount || 1
+    }));
+
+    // Filter out non-http(s) URLs
+    allHistoryRecords = allHistoryRecords.filter((r) => {
+      try {
+        const parsed = new URL(r.url);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+      } catch {
+        return false;
+      }
+    });
+
+    // Apply current filter (search text) to the freshly fetched data
+    applyHistoryFilter();
+  } catch (err) {
+    historyResultsSummary.textContent = `Error: ${err.message}`;
+  } finally {
+    searchHistoryBtn.disabled = false;
+    searchHistoryBtn.textContent = "Refresh";
+  }
+}
+
+function renderHistoryTablePage() {
+  const totalItems = historyFilteredRecords.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / historyPageSize));
+  if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+
+  const startIdx = (historyCurrentPage - 1) * historyPageSize;
+  const endIdx = Math.min(startIdx + historyPageSize, totalItems);
+  const slice = historyFilteredRecords.slice(startIdx, endIdx);
+
+  historyTableBody.innerHTML = "";
+
+  if (slice.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 4;
+    td.textContent = "No history entries found.";
+    td.style.textAlign = "center";
+    td.style.color = "var(--muted)";
+    tr.appendChild(td);
+    historyTableBody.appendChild(tr);
+  } else {
+    slice.forEach((rec, idx) => {
+      const tr = document.createElement("tr");
+
+      const tdIndex = document.createElement("td");
+      tdIndex.textContent = startIdx + idx + 1;
+
+      const tdTitle = document.createElement("td");
+      tdTitle.className = "cell-title";
+      tdTitle.textContent = rec.title || "(No title)";
+
+      const tdUrl = document.createElement("td");
+      const urlSpan = document.createElement("span");
+      urlSpan.className = "url-pill url-new";
+      urlSpan.textContent = rec.url;
+      tdUrl.appendChild(urlSpan);
+
+      const tdVisits = document.createElement("td");
+      tdVisits.className = "col-visits";
+      tdVisits.textContent = rec.visitCount || 1;
+
+      tr.append(tdIndex, tdTitle, tdUrl, tdVisits);
+      historyTableBody.appendChild(tr);
+    });
+  }
+
+  historyResultsSummary.textContent =
+    totalItems > 0 ? `Showing ${totalItems} history entry(ies)` : "No results.";
+
+  historyPageInfo.textContent =
+    totalItems > 0
+      ? `Rows ${startIdx + 1}–${endIdx} of ${totalItems} (Page ${historyCurrentPage} of ${totalPages})`
+      : "0 rows";
+
+  historyFirstPageBtn.disabled = historyCurrentPage <= 1;
+  historyPrevPageBtn.disabled = historyCurrentPage <= 1;
+  historyNextPageBtn.disabled = historyCurrentPage >= totalPages;
+  historyLastPageBtn.disabled = historyCurrentPage >= totalPages;
+}
+
+function applyHistoryFilter() {
+  const query = historySearchInput.value.trim().toLowerCase();
+  if (!query) {
+    historyFilteredRecords = [...allHistoryRecords];
+  } else {
+    historyFilteredRecords = allHistoryRecords.filter(
+      (r) =>
+        r.url.toLowerCase().includes(query) ||
+        (r.title && r.title.toLowerCase().includes(query))
+    );
+  }
+  historyCurrentPage = 1;
+  renderHistoryTablePage();
+}
+
+// Reactive search filter with debounce — filters client-side as the user types
+historySearchInput.addEventListener("input", () => {
+  clearTimeout(historySearchDebounceTimer);
+  historySearchDebounceTimer = setTimeout(() => {
+    applyHistoryFilter();
+  }, 300);
+});
+
+// Allow pressing Enter in the search input (no longer needed for triggering, but harmless)
+historySearchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    clearTimeout(historySearchDebounceTimer);
+    applyHistoryFilter();
+  }
+});
+
+// Refresh button re-fetches history from the browser API
+searchHistoryBtn.addEventListener("click", () => {
+  fetchHistory();
+});
+
+// Time range change triggers a re-fetch from the browser API
+historyTimeRange.addEventListener("change", () => {
+  fetchHistory();
+});
+
+historyPageSizeSelect.addEventListener("change", () => {
+  historyPageSize = parseInt(historyPageSizeSelect.value, 10);
+  historyCurrentPage = 1;
+  renderHistoryTablePage();
+});
+
+historyFirstPageBtn.addEventListener("click", () => {
+  historyCurrentPage = 1;
+  renderHistoryTablePage();
+});
+
+historyPrevPageBtn.addEventListener("click", () => {
+  if (historyCurrentPage > 1) {
+    historyCurrentPage--;
+    renderHistoryTablePage();
+  }
+});
+
+historyNextPageBtn.addEventListener("click", () => {
+  const totalPages = Math.ceil(historyFilteredRecords.length / historyPageSize);
+  if (historyCurrentPage < totalPages) {
+    historyCurrentPage++;
+    renderHistoryTablePage();
+  }
+});
+
+historyLastPageBtn.addEventListener("click", () => {
+  historyCurrentPage = Math.max(1, Math.ceil(historyFilteredRecords.length / historyPageSize));
+  renderHistoryTablePage();
+});
+
+// Auto-load all history when the page opens
+fetchHistory();
+
+// ============================================================
+// Migrate URLs Tab
+// ============================================================
 const oldDomainInput = document.getElementById("oldDomain");
 const newDomainInput = document.getElementById("newDomain");
 const includeSubdomainsInput = document.getElementById("includeSubdomains");
