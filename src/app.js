@@ -17,6 +17,16 @@ document.querySelectorAll(".nav-item").forEach((btn) => {
   });
 });
 
+// Sidebar collapse toggle
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebarToggle");
+const appLayout = document.querySelector(".app-layout");
+
+sidebarToggle.addEventListener("click", () => {
+  sidebar.classList.toggle("collapsed");
+  appLayout.classList.toggle("sidebar-collapsed");
+});
+
 // Initialize tabs
 ViewHistoryTab.init();
 MigrateUrlsTab.init();

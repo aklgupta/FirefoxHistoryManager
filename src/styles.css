@@ -49,9 +49,58 @@ body {
   left: 0;
   bottom: 0;
   overflow-y: auto;
+  transition: width 0.25s ease, min-width 0.25s ease;
+  min-width: var(--sidebar-width);
+  z-index: 100;
+}
+
+.sidebar.collapsed {
+  width: 48px;
+  min-width: 48px;
+}
+
+.sidebar.collapsed .sidebar-header h1 {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar.collapsed .nav-item span:not(.nav-icon) {
+  display: none;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, transform 0.25s ease;
+  z-index: 101;
+}
+
+.sidebar-toggle:hover {
+  background: var(--sidebar-active-bg);
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  transform: rotate(180deg);
 }
 
 .sidebar-header {
+  position: relative;
   padding: 20px 18px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -109,6 +158,11 @@ body {
   flex: 1;
   margin-left: var(--sidebar-width);
   min-width: 0;
+  transition: margin-left 0.25s ease;
+}
+
+.app-layout.sidebar-collapsed .main-content {
+  margin-left: 48px;
 }
 
 /* Tab Panels */
@@ -428,8 +482,15 @@ td.col-visits {
 }
 
 .url-new {
-  background: var(--new-bg);
-  color: var(--new-text);
+  background: transparent;
+  color: var(--text);
+}
+
+.domain-highlight {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--primary);
+  text-underline-offset: 2px;
 }
 
 .pagination-bar {

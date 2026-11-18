@@ -189,13 +189,13 @@ const MigrateUrlsTab = {
         const tdOld = document.createElement("td");
         const oldDiv = document.createElement("div");
         oldDiv.className = "url-pill url-old";
-        oldDiv.textContent = rec.oldUrl;
+        oldDiv.innerHTML = highlightDomain(rec.oldUrl, rec.oldDomain);
         tdOld.appendChild(oldDiv);
 
         const tdNew = document.createElement("td");
         const newDiv = document.createElement("div");
         newDiv.className = "url-pill url-new";
-        newDiv.textContent = rec.newUrl;
+        newDiv.innerHTML = highlightDomain(rec.newUrl, rec.newDomain);
         tdNew.appendChild(newDiv);
 
         const tdVisits = document.createElement("td");
@@ -295,6 +295,8 @@ async function findMatchingRecords(oldDomain, newDomain, includeSubdomains) {
           title: item.title || "(No title)",
           oldUrl: item.url,
           newUrl: replaceHost(new URL(item.url), oldDomain, newDomain),
+          oldDomain,
+          newDomain,
           visitCount: item.visitCount || 1
         });
       }
@@ -303,4 +305,18 @@ async function findMatchingRecords(oldDomain, newDomain, includeSubdomains) {
     }
   }
   return matched;
+}
+
+/**
+ * Returns the URL with the domain portion wrapped in a <strong> tag for highlighting.
+ * Escapes HTML entities in the non-domain parts to prevent XSS.
+ */
+function highlightDomain(url, domain) {
+  // First escape HTML entities in the entire URL
+  const escaped = url.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Split on the domain and wrap the first occurrence in a highlight tag
+  const parts = escaped.split(domain);
+  if (parts.length < 2) return escaped;
+  // Only highlight the first occurrence (the domain in the host position)
+  return parts[0] + `<strong class="domain-highlight">${domain}</strong>` + parts.slice(1).join(domain);
 }
