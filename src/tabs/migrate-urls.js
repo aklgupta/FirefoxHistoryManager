@@ -9,9 +9,8 @@ const MigrateUrlsTab = {
   init() {
     const oldDomainInput = document.getElementById("oldDomain");
     const newDomainInput = document.getElementById("newDomain");
-    const includeSubdomainsInput = document.getElementById("includeSubdomains");
+    const matchModeSelect = document.getElementById("matchMode");
     const deleteOldInput = document.getElementById("deleteOld");
-    const previewBtn = document.getElementById("previewBtn");
     const migrateBtn = document.getElementById("migrateBtn");
     const statusBar = document.getElementById("statusBar");
 
@@ -45,61 +44,75 @@ const MigrateUrlsTab = {
       300
     );
 
-    // Preview button
-    previewBtn.addEventListener("click", async () => {
-      const result = validateInputs(oldDomainInput, newDomainInput);
+    // Disable migrate button by default
+    migrateBtn.disabled = true;
+
+    // Update button state synchronously on every input change
+    const updateMigrateBtnState = () => {
+      const matchMode = matchModeSelect.value;
+      const isAnyPart = matchMode === "anyPart";
+      const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
+
       if (result.error) {
-        setStatus(statusBar, result.error, "error");
+        migrateBtn.disabled = true;
         return;
       }
 
-      const { oldDomain, newDomain } = result;
-      const includeSubdomains = includeSubdomainsInput.checked;
-
-      previewBtn.disabled = true;
-      setStatus(statusBar, "Searching Firefox history...");
-
-      try {
-        const matched = await findMatchingRecords(oldDomain, newDomain, includeSubdomains);
-
-        if (matched.length === 0) {
-          resultsSection.classList.add("hidden");
-          setStatus(statusBar, `No history entries found for ${oldDomain}.`, "info");
-          return;
-        }
-
-        this.allMatchedRecords = matched;
-        filterInput.value = "";
-        this.filteredRecords = [...this.allMatchedRecords];
-        Pagination.reset();
-        resultsSection.classList.remove("hidden");
-        this.renderTablePage(previewTableBody, pageInfo, resultsSummary);
-        setStatus(statusBar, `Preview ready: ${matched.length} unique URL(s) found.`, "success");
-      } catch (err) {
-        setStatus(statusBar, `Error: ${err.message}`, "error");
-      } finally {
-        previewBtn.disabled = false;
+      const { newDomain } = result;
+      // In domain/subdomain modes, button is disabled if new domain is empty
+      if (!isAnyPart && !newDomain) {
+        migrateBtn.disabled = true;
+        return;
       }
-    });
+
+      migrateBtn.disabled = false;
+    };
+
+    oldDomainInput.addEventListener("input", updateMigrateBtnState);
+    newDomainInput.addEventListener("input", updateMigrateBtnState);
+    matchModeSelect.addEventListener("change", updateMigrateBtnState);
+
+    // Live preview: debounced search triggered by typing in old/new domain or changing match mode
+    let livePreviewTimeout = null;
+    const runLivePreview = () => {
+      clearTimeout(livePreviewTimeout);
+      livePreviewTimeout = setTimeout(() => {
+        this.updatePreview(
+          oldDomainInput, newDomainInput, matchModeSelect, filterInput, resultsSection,
+          previewTableBody, pageInfo, resultsSummary, statusBar
+        );
+      }, 400);
+    };
+
+    oldDomainInput.addEventListener("input", runLivePreview);
+    newDomainInput.addEventListener("input", runLivePreview);
+    matchModeSelect.addEventListener("change", runLivePreview);
 
     // Migrate button
     migrateBtn.addEventListener("click", async () => {
-      const result = validateInputs(oldDomainInput, newDomainInput);
+      const matchMode = matchModeSelect.value;
+      const isAnyPart = matchMode === "anyPart";
+      const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
       if (result.error) {
         setStatus(statusBar, result.error, "error");
         return;
       }
 
       const { oldDomain, newDomain } = result;
-      const includeSubdomains = includeSubdomainsInput.checked;
+
+      // Block migration if new domain is empty in domain/subdomain modes
+      if (!isAnyPart && !newDomain) {
+        setStatus(statusBar, "Please enter a new domain to migrate.", "error");
+        return;
+      }
+
       const deleteOld = deleteOldInput.checked;
 
-      previewBtn.disabled = true;
       migrateBtn.disabled = true;
       setStatus(statusBar, "Scanning history for migration...");
 
       try {
-        const records = await findMatchingRecords(oldDomain, newDomain, includeSubdomains);
+        const records = await findMatchingRecords(oldDomain, newDomain, matchMode);
 
         if (records.length === 0) {
           setStatus(statusBar, `No history entries found for ${oldDomain}.`, "info");
@@ -146,16 +159,71 @@ const MigrateUrlsTab = {
 
         setStatus(
           statusBar,
-          `Migration complete! Copied ${migratedVisits} visit(s) across ${migratedUrls} URL(s) to ${newDomain}.`,
+          `Migration complete! Copied ${migratedVisits} visit(s) across ${migratedUrls} URL(s).`,
           "success"
         );
       } catch (err) {
         setStatus(statusBar, `Error during migration: ${err.message}`, "error");
       } finally {
-        previewBtn.disabled = false;
-        migrateBtn.disabled = false;
+        // Restore button state based on current inputs
+        updateMigrateBtnState();
       }
     });
+  },
+
+  // Live preview: search and render matched records
+  async updatePreview(oldDomainInput, newDomainInput, matchModeSelect, filterInput,
+                      resultsSection, previewTableBody, pageInfo, resultsSummary, statusBar) {
+    const matchMode = matchModeSelect.value;
+    const isAnyPart = matchMode === "anyPart";
+
+    // If old value is empty, clear the preview silently
+    if (!oldDomainInput.value.trim()) {
+      this.allMatchedRecords = [];
+      this.filteredRecords = [];
+      resultsSection.classList.add("hidden");
+      statusBar.classList.add("hidden");
+      this.renderTablePage(previewTableBody, pageInfo, resultsSummary);
+      return;
+    }
+
+    const result = validateInputs(oldDomainInput, newDomainInput, matchMode);
+    if (result.error) {
+      setStatus(statusBar, result.error, "error");
+      return;
+    }
+
+    const { oldDomain, newDomain } = result;
+
+    setStatus(statusBar, "Searching Firefox history...");
+
+    try {
+      const matched = await findMatchingRecords(oldDomain, newDomain, matchMode);
+
+      if (matched.length === 0) {
+        resultsSection.classList.add("hidden");
+        setStatus(statusBar, `No history entries found for ${oldDomain}.`, "info");
+        this.allMatchedRecords = [];
+        this.filteredRecords = [];
+        return;
+      }
+
+      this.allMatchedRecords = matched;
+      filterInput.value = "";
+      this.filteredRecords = [...this.allMatchedRecords];
+      Pagination.reset();
+      resultsSection.classList.remove("hidden");
+      this.renderTablePage(previewTableBody, pageInfo, resultsSummary);
+
+      // Check if new domain is empty in domain/subdomain modes
+      if (!isAnyPart && !newDomain) {
+        setStatus(statusBar, "Please enter a new domain to migrate.", "error");
+      } else {
+        setStatus(statusBar, `${matched.length} unique URL(s) will be migrated.`, "success");
+      }
+    } catch (err) {
+      setStatus(statusBar, `Error: ${err.message}`, "error");
+    }
   },
 
   renderTablePage(previewTableBody, pageInfo, resultsSummary) {
@@ -245,7 +313,7 @@ function isValidDomain(domain) {
 
 function matchesDomain(hostname, oldDomain, newDomain, includeSubdomains) {
   const host = hostname.toLowerCase();
-  if (host === newDomain || host.endsWith("." + newDomain)) {
+  if (newDomain && (host === newDomain || host.endsWith("." + newDomain))) {
     return false;
   }
   if (host === oldDomain) return true;
@@ -264,41 +332,60 @@ function replaceHost(urlObj, oldDomain, newDomain) {
   return urlObj.toString();
 }
 
-function validateInputs(oldDomainInput, newDomainInput) {
-  const oldDomain = normalizeDomain(oldDomainInput.value);
-  const newDomain = normalizeDomain(newDomainInput.value);
+function validateInputs(oldDomainInput, newDomainInput, matchMode) {
+  const isAnyPart = matchMode === "anyPart";
+  const oldDomain = isAnyPart ? oldDomainInput.value.trim() : normalizeDomain(oldDomainInput.value);
+  const newDomain = isAnyPart ? newDomainInput.value.trim() : normalizeDomain(newDomainInput.value);
 
-  if (!oldDomain || !newDomain) {
-    return { error: "Please enter both the old and new domains." };
+  if (!oldDomain) {
+    return { error: "Please enter the old value." };
   }
-  if (!isValidDomain(oldDomain) || !isValidDomain(newDomain)) {
-    return { error: "Please enter valid full domains (e.g., oldsite.com and newsite.com)." };
-  }
-  if (oldDomain === newDomain) {
-    return { error: "Old and new domains must be different." };
+  if (newDomain) {
+    if (!isAnyPart && (!isValidDomain(oldDomain) || !isValidDomain(newDomain))) {
+      return { error: "Please enter valid full domains (e.g., oldsite.com and newsite.com)." };
+    }
+    if (isAnyPart && oldDomain === newDomain) {
+      return { error: "Old and new values must be different." };
+    }
   }
   return { oldDomain, newDomain };
 }
 
-async function findMatchingRecords(oldDomain, newDomain, includeSubdomains) {
+async function findMatchingRecords(oldDomain, newDomain, matchMode) {
   const results = await HistoryAPI.searchByText(oldDomain);
+  const includeSubdomains = matchMode === "subdomain";
+  const isAnyPart = matchMode === "anyPart";
 
   const matched = [];
   for (const item of results) {
     try {
       const parsed = new URL(item.url);
-      if (
-        (parsed.protocol === "http:" || parsed.protocol === "https:") &&
-        matchesDomain(parsed.hostname, oldDomain, newDomain, includeSubdomains)
-      ) {
-        matched.push({
-          title: item.title || "(No title)",
-          oldUrl: item.url,
-          newUrl: replaceHost(new URL(item.url), oldDomain, newDomain),
-          oldDomain,
-          newDomain,
-          visitCount: item.visitCount || 1
-        });
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") continue;
+
+      if (isAnyPart) {
+        // String-based matching: check if the old string appears anywhere in the URL
+        if (item.url.includes(oldDomain)) {
+          matched.push({
+            title: item.title || "(No title)",
+            oldUrl: item.url,
+            newUrl: item.url.replace(oldDomain, newDomain),
+            oldDomain,
+            newDomain,
+            visitCount: item.visitCount || 1
+          });
+        }
+      } else {
+        // Domain-based matching
+        if (matchesDomain(parsed.hostname, oldDomain, newDomain, includeSubdomains)) {
+          matched.push({
+            title: item.title || "(No title)",
+            oldUrl: item.url,
+            newUrl: newDomain ? replaceHost(new URL(item.url), oldDomain, newDomain) : "",
+            oldDomain,
+            newDomain,
+            visitCount: item.visitCount || 1
+          });
+        }
       }
     } catch {
       // Skip malformed URLs
@@ -312,6 +399,7 @@ async function findMatchingRecords(oldDomain, newDomain, includeSubdomains) {
  * Escapes HTML entities in the non-domain parts to prevent XSS.
  */
 function highlightDomain(url, domain) {
+  if (!domain) return url;
   // First escape HTML entities in the entire URL
   const escaped = url.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   // Split on the domain and wrap the first occurrence in a highlight tag

@@ -128,23 +128,24 @@
               <label for="newDomain">New Domain</label>
               <input type="text" id="newDomain" placeholder="e.g., newsite.com" />
             </div>
+
+            <div class="field">
+              <label for="matchMode">Match Mode</label>
+              <select id="matchMode">
+                <option value="domain">Top level domain only</option>
+                <option value="subdomain">Domain + sub-domain</option>
+                <option value="anyPart">Any part of the URL</option>
+              </select>
+            </div>
           </div>
 
-          <div class="options-row">
-            <label class="checkbox-label">
-              <input type="checkbox" id="includeSubdomains" checked />
-              <span>Include subdomains (e.g., <code>sub.oldsite.com</code>)</span>
-            </label>
+          <div class="actions-row">
+            <button id="migrateBtn" class="btn primary">Migrate History</button>
 
             <label class="checkbox-label danger-option">
               <input type="checkbox" id="deleteOld" />
               <span>Delete old history entries after migrating</span>
             </label>
-          </div>
-
-          <div class="actions-row">
-            <button id="previewBtn" class="btn secondary">Preview Matches</button>
-            <button id="migrateBtn" class="btn primary">Migrate History</button>
           </div>
 
           <div id="statusBar" class="status-bar hidden"></div>
