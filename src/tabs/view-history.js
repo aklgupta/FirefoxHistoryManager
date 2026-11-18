@@ -231,6 +231,8 @@ const ViewHistoryTab = {
             const allSelected = slice.every((r) => this.selectedUrls.has(r.url));
             selectAllCheckbox.checked = allSelected;
           }
+          // Re-render to update row highlight classes
+          this.renderTablePage(tableBody, pageInfo, resultsSummary, selectAllCheckbox);
         });
         tdSelect.appendChild(checkbox);
 

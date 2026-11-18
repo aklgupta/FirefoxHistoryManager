@@ -260,12 +260,13 @@ body {
 }
 
 .btn.danger {
-  background: #dc2626 !important;
-  color: #fff !important;
+  background: var(--old-bg) !important;
+  color: var(--old-text) !important;
+  border: 1px solid #f5c2c7 !important;
 }
 
 .btn.danger:hover:not(:disabled) {
-  background: #b91c1c !important;
+  background: #fce7e7 !important;
 }
 
 .status-bar {
@@ -340,7 +341,7 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  table-layout: auto;
   font-size: 13px;
 }
 
@@ -365,24 +366,36 @@ th {
   text-align: center;
 }
 
+tr:nth-child(even) {
+  background: #f9f9fb;
+}
+
+tr:hover {
+  background: #eef4ff;
+}
+
 tr.selected {
-  background: #fef3c7;
+  background: #e0ecff;
+}
+
+tr.selected:hover {
+  background: #d5e3ff;
 }
 
 .col-index {
-  width: 55px;
+  width: 50px;
 }
 
 .col-title {
-  width: 18%;
+  width: auto;
 }
 
 .col-url {
-  width: 35%;
+  width: auto;
 }
 
 .col-visits {
-  width: 70px;
+  width: 60px;
   text-align: right;
 }
 
