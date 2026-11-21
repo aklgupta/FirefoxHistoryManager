@@ -73,6 +73,28 @@ const Filtering = {
   },
 
   /**
+   * Normalize a user-provided domain query by stripping protocol, www prefix, and trailing slashes.
+   * e.g., "http://www.example.com/" → "example.com"
+   * @param {string} raw - the raw user input
+   * @returns {string} normalized domain
+   */
+  normalizeDomainQuery(raw) {
+    let domain = raw.trim().toLowerCase();
+    // Strip protocol
+    domain = domain.replace(/^https?:\/\//, "");
+    // Strip trailing slashes and any path
+    domain = domain.replace(/\/+$/, "");
+    domain = domain.split("/")[0]; // remove any remaining path
+    // Strip port
+    domain = domain.split(":")[0];
+    // Strip www. prefix
+    if (domain.startsWith("www.")) {
+      domain = domain.slice(4);
+    }
+    return domain;
+  },
+
+  /**
    * Check if a record's domain matches a domain query.
    * The query can be a full domain or a partial match (e.g., "example.com" matches "www.example.com").
    * @param {Object} record - record with a `url` field

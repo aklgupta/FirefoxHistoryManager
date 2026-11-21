@@ -84,7 +84,7 @@ const AdvancedSearchTab = {
       this.filteredRecords = this.applyFilters(
         this.allRecords,
         keywordInput.value.trim().toLowerCase(),
-        domainInput.value.trim().toLowerCase(),
+        Filtering.normalizeDomainQuery(domainInput.value),
         dateFromInput.value,
         dateToInput.value
       );
