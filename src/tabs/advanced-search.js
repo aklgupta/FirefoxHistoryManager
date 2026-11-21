@@ -126,10 +126,25 @@ const AdvancedSearchTab = {
       result = result.filter((r) => Filtering.matchDomain(r, domain));
     }
 
-    // Date/time range filter — requires visit timestamps
+    // Date range filter — requires visit timestamps
+    // Inputs are type="date", so values are like "2024-01-15"
     if (dateFrom || dateTo) {
-      const fromMs = dateFrom ? new Date(dateFrom).getTime() : 0;
-      const toMs = dateTo ? new Date(dateTo).getTime() : Infinity;
+      let fromMs = 0;
+      let toMs = Infinity;
+
+      if (dateFrom) {
+        // Parse as local time: start of the selected day (00:00:00.000)
+        const [year, month, day] = dateFrom.split("-").map(Number);
+        const fromDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        fromMs = fromDate.getTime();
+      }
+      if (dateTo) {
+        // Parse as local time: end of the selected day (23:59:59.999)
+        const [year, month, day] = dateTo.split("-").map(Number);
+        const toDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+        toMs = toDate.getTime();
+      }
+
       result = result.filter((r) => {
         const visits = this.visitsMap.get(r.url);
         if (!visits || visits.visitTimes.length === 0) return false;
