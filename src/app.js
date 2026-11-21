@@ -2,6 +2,36 @@
 // App Entry Point
 // ============================================================
 
+// Theme management
+const themeToggle = document.getElementById("themeToggle");
+const toggleIcon = themeToggle.querySelector(".toggle-icon");
+const toggleLabel = themeToggle.querySelector("span:last-child");
+
+const applyTheme = (theme) => {
+  if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    toggleIcon.textContent = "☀️";
+    toggleLabel.textContent = "Light Mode";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    toggleIcon.textContent = "🌙";
+    toggleLabel.textContent = "Dark Mode";
+  }
+};
+
+// Load saved theme on startup
+browser.storage.local.get("theme").then((result) => {
+  applyTheme(result.theme || "light");
+});
+
+// Toggle theme on click
+themeToggle.addEventListener("click", () => {
+  const currentTheme = document.documentElement.getAttribute("data-theme");
+  const newTheme = currentTheme === "dark" ? "light" : "dark";
+  applyTheme(newTheme);
+  browser.storage.local.set({ theme: newTheme });
+});
+
 // Tab Navigation
 document.querySelectorAll(".nav-item").forEach((btn) => {
   btn.addEventListener("click", () => {

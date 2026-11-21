@@ -3,7 +3,8 @@
   "name": "History Manager",
   "version": "2.0",
   "permissions": [
-    "history"
+    "history",
+    "storage"
   ],
   "background": {
     "scripts": ["background.js"]
