@@ -82,5 +82,24 @@ const HistoryAPI = {
         return false;
       }
     });
+  },
+
+  /**
+   * Fetch visits for multiple URLs concurrently.
+   * @param {string[]} urls - array of URLs
+   * @returns {Promise<Map<string, Array>>} map from URL to its visit records
+   */
+  async getVisitsBatch(urls) {
+    const results = new Map();
+    const promises = urls.map(async (url) => {
+      try {
+        const visits = await browser.history.getVisits({ url });
+        results.set(url, visits);
+      } catch {
+        results.set(url, []);
+      }
+    });
+    await Promise.all(promises);
+    return results;
   }
 };

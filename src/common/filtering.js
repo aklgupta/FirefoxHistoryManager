@@ -57,5 +57,31 @@ const Filtering = {
       const value = record[field];
       return value && value.toString().toLowerCase().includes(query);
     });
+  },
+
+  /**
+   * Extract the domain (hostname) from a URL string.
+   * @param {string} url
+   * @returns {string} lowercase domain or empty string if parsing fails
+   */
+  extractDomain(url) {
+    try {
+      return new URL(url).hostname.toLowerCase();
+    } catch {
+      return "";
+    }
+  },
+
+  /**
+   * Check if a record's domain matches a domain query.
+   * The query can be a full domain or a partial match (e.g., "example.com" matches "www.example.com").
+   * @param {Object} record - record with a `url` field
+   * @param {string} domainQuery - lowercase domain query
+   * @returns {boolean}
+   */
+  matchDomain(record, domainQuery) {
+    if (!domainQuery) return true;
+    const domain = this.extractDomain(record.url);
+    return domain === domainQuery || domain.endsWith("." + domainQuery);
   }
 };

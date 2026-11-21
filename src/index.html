@@ -22,6 +22,10 @@
           <span class="nav-icon">🔄</span>
           <span>Migrate URLs</span>
         </button>
+        <button class="nav-item" data-tab="advancedSearch">
+          <span class="nav-icon">🔍</span>
+          <span>Advanced Search</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button class="theme-toggle" id="themeToggle" title="Toggle dark theme">
@@ -198,6 +202,106 @@
           </div>
         </section>
       </section>
+
+      <!-- Advanced Search Tab -->
+      <section id="advancedSearch" class="tab-panel">
+        <header class="header">
+          <div>
+            <h1>Advanced Search</h1>
+            <p class="subtitle">Search history by keyword, domain, date/time range, and sort results.</p>
+          </div>
+        </header>
+
+        <section class="controls-card">
+          <div class="input-row">
+            <div class="field" style="flex:2">
+              <label for="advKeyword">Keyword</label>
+              <input type="text" id="advKeyword" placeholder="Search in title or URL..." />
+            </div>
+            <div class="field">
+              <label for="advDomain">Domain</label>
+              <input type="text" id="advDomain" placeholder="e.g., example.com" />
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="field">
+              <label for="advDateFrom">From</label>
+              <input type="datetime-local" id="advDateFrom" />
+            </div>
+            <div class="field">
+              <label for="advDateTo">To</label>
+              <input type="datetime-local" id="advDateTo" />
+            </div>
+            <div class="field">
+              <label for="advSortField">Sort by</label>
+              <select id="advSortField">
+                <option value="lastVisit">Last Visit</option>
+                <option value="title">Title</option>
+                <option value="url">URL</option>
+                <option value="visitCount">Visit Count</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="advSortDirection">Direction</label>
+              <select id="advSortDirection">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button id="advSearchBtn" class="btn primary">Search</button>
+            <button id="advExportBtn" class="btn secondary" disabled>Export CSV</button>
+          </div>
+        </section>
+
+        <section id="advResultsSection" class="results-card">
+          <div class="results-toolbar">
+            <div class="results-summary" id="advResultsSummary">No results yet.</div>
+            <div class="filter-controls">
+              <select id="advPageSizeSelect" aria-label="Rows per page">
+                <option value="25">25 / page</option>
+                <option value="50" selected>50 / page</option>
+                <option value="100">100 / page</option>
+                <option value="250">250 / page</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-index">#</th>
+                  <th class="col-title">Title</th>
+                  <th class="col-url">URL</th>
+                  <th class="col-domain">Domain</th>
+                  <th class="col-last-visit">Last Visit</th>
+                  <th class="col-visits">Visits</th>
+                  <th class="col-visit-times">Visit Times</th>
+                </tr>
+              </thead>
+              <tbody id="advTableBody">
+                <tr>
+                  <td colspan="7" style="text-align:center;color:var(--muted)">Run a search to see results.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination-bar">
+            <div id="advPageInfo" class="page-info"></div>
+            <div class="pagination-buttons">
+              <button id="advFirstPageBtn" class="btn small secondary" disabled>« First</button>
+              <button id="advPrevPageBtn" class="btn small secondary" disabled>‹ Previous</button>
+              <button id="advNextPageBtn" class="btn small secondary" disabled>Next ›</button>
+              <button id="advLastPageBtn" class="btn small secondary" disabled>Last »</button>
+            </div>
+          </div>
+        </section>
+      </section>
     </main>
   </div>
 
@@ -209,6 +313,7 @@
   <!-- Tab modules -->
   <script src="tabs/view-history.js"></script>
   <script src="tabs/migrate-urls.js"></script>
+  <script src="tabs/advanced-search.js"></script>
 
   <!-- App entry point -->
   <script src="app.js"></script>

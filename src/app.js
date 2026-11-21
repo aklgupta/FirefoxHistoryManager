@@ -60,3 +60,4 @@ sidebarToggle.addEventListener("click", () => {
 // Initialize tabs
 ViewHistoryTab.init();
 MigrateUrlsTab.init();
+AdvancedSearchTab.init();
