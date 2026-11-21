@@ -133,7 +133,7 @@ const AdvancedSearchTab = {
       result = result.filter((r) => {
         const visits = this.visitsMap.get(r.url);
         if (!visits || visits.visitTimes.length === 0) return false;
-        return visits.visitTimes.some((vt) => vt.visitTime >= fromMs && vt.visitTime <= toMs);
+        return visits.visitTimes.some((vt) => vt >= fromMs && vt <= toMs);
       });
     }
 
