@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>History Manager</title>
+  <link rel="stylesheet" href="lib/flatpickr.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -227,11 +228,11 @@
           <div class="input-row">
             <div class="field">
               <label for="advDateFrom">From</label>
-               <input type="date" id="advDateFrom" />
+               <input type="text" id="advDateFrom" placeholder="Select date (optional time)" readonly />
              </div>
              <div class="field">
                <label for="advDateTo">To</label>
-               <input type="date" id="advDateTo" />
+               <input type="text" id="advDateTo" placeholder="Select date (optional time)" readonly />
             </div>
             <div class="field">
               <label for="advSortField">Sort by</label>
@@ -304,6 +305,9 @@
       </section>
     </main>
   </div>
+
+  <!-- Flatpickr datetime picker -->
+  <script src="lib/flatpickr.min.js"></script>
 
   <!-- Common APIs -->
   <script src="common/pagination.js"></script>

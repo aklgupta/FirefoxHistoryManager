@@ -25,6 +25,25 @@ const AdvancedSearchTab = {
     const nextPageBtn = document.getElementById("advNextPageBtn");
     const lastPageBtn = document.getElementById("advLastPageBtn");
 
+    // Initialize flatpickr datetime pickers with optional time
+    flatpickr(dateFromInput, {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      time_12hr: false,
+      allowInput: true,
+      noCalendar: false,
+      animate: false
+    });
+
+    flatpickr(dateToInput, {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      time_12hr: false,
+      allowInput: true,
+      noCalendar: false,
+      animate: false
+    });
+
     // Initialize shared pagination
     Pagination.init("advanced-search", pageSizeSelect, firstPageBtn, prevPageBtn, nextPageBtn, lastPageBtn, () => {
       this.renderTablePage(tableBody, pageInfo, resultsSummary);
@@ -127,22 +146,23 @@ const AdvancedSearchTab = {
     }
 
     // Date range filter — requires visit timestamps
-    // Inputs are type="date", so values are like "2024-01-15"
+    // flatpickr format: "Y-m-d H:i" (e.g., "2024-01-15 14:30")
+    // If only date is selected (no time), default to start/end of day
     if (dateFrom || dateTo) {
       let fromMs = 0;
       let toMs = Infinity;
 
       if (dateFrom) {
-        // Parse as local time: start of the selected day (00:00:00.000)
-        const [year, month, day] = dateFrom.split("-").map(Number);
-        const fromDate = new Date(year, month - 1, day, 0, 0, 0, 0);
-        fromMs = fromDate.getTime();
+        const parsedFrom = this.parseFlatpickrDate(dateFrom);
+        fromMs = parsedFrom.getTime();
       }
       if (dateTo) {
-        // Parse as local time: end of the selected day (23:59:59.999)
-        const [year, month, day] = dateTo.split("-").map(Number);
-        const toDate = new Date(year, month - 1, day, 23, 59, 59, 999);
-        toMs = toDate.getTime();
+        const parsedTo = this.parseFlatpickrDate(dateTo);
+        // If time was not set (defaults to 00:00), use end of day
+        if (parsedTo.getHours() === 0 && parsedTo.getMinutes() === 0) {
+          parsedTo.setHours(23, 59, 59, 999);
+        }
+        toMs = parsedTo.getTime();
       }
 
       result = result.filter((r) => {
@@ -322,6 +342,28 @@ const AdvancedSearchTab = {
         : "0 rows";
 
     Pagination.updateControls(totalItems, pageInfo);
+  },
+
+  /**
+   * Parse a flatpickr date string ("Y-m-d H:i") into a local Date object.
+   * If only the date part is present (no time), defaults to 00:00.
+   */
+  parseFlatpickrDate(value) {
+    // flatpickr format: "Y-m-d H:i" → "2024-01-15 14:30"
+    // or just "2024-01-15" if time is not set
+    const parts = value.trim().split(" ");
+    const dateParts = parts[0].split("-").map(Number);
+    const year = dateParts[0];
+    const month = dateParts[1] - 1; // 0-indexed
+    const day = dateParts[2];
+    let hours = 0;
+    let minutes = 0;
+    if (parts[1]) {
+      const timeParts = parts[1].split(":").map(Number);
+      hours = timeParts[0] || 0;
+      minutes = timeParts[1] || 0;
+    }
+    return new Date(year, month, day, hours, minutes, 0, 0);
   },
 
   /**
